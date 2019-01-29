@@ -1,0 +1,13 @@
+1、下载jdk1.7资源包
+2、解压jdk1.7
+	tar -zxvf jdk1.7
+3、配置环境变量
+	vi /etc/profile
+	/**-------------
+	export JAVA_HOME=/usr/local/lib/jdk1.7
+	export PATH=$JAVA_HOME/bin:$PATH
+	export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+	---------------*/
+	source /etc/profile
+4、测试
+	java -version
