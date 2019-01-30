@@ -1,35 +1,43 @@
 1、创建目录/usr/servers，以后我们把所有软件安装在此目录
-    mkdir -p /usr/servers  
-    cd /usr/servers/  
+
+    mkdir -p /usr/servers 
+    cd /usr/servers/ 
 	
 2、安装依赖（我的环境是ubuntu，可以使用如下命令安装，其他的可以参考openresty安装步骤）
+    
     yum install pcre-devel openssl-devel gcc curl
 	
 3、下载ngx_openresty-1.7.7.2.tar.gz并解压
-    wget http://openresty.org/download/ngx_openresty-1.7.7.2.tar.gz  
-    tar -xzvf ngx_openresty-1.7.7.2.tar.gz  
+
+    wget http://openresty.org/download/ngx_openresty-1.7.7.2.tar.gz 
+    tar -xzvf ngx_openresty-1.7.7.2.tar.gz
 	
-	ngx_openresty-1.7.7.2/bundle目录里存放着nginx核心和很多第三方模块，比如有我们需要的Lua和LuaJIT。
+ngx_openresty-1.7.7.2/bundle目录里存放着nginx核心和很多第三方模块，比如有我们需要的Lua和LuaJIT。
+
 3、安装LuaJIT
+
     cd bundle/LuaJIT-2.1-20150120/  
     make clean && make && make install  
-    ln -sf luajit-2.1.0-alpha /usr/local/bin/luajit  
+    ln -sf luajit-2.1.0-alpha /usr/local/bin/luajit
 	
 4、下载ngx_cache_purge模块，该模块用于清理nginx缓存
+
     cd /usr/servers/ngx_openresty-1.7.7.2/bundle  
     wget https://github.com/FRiCKLE/ngx_cache_purge/archive/2.3.tar.gz  
     tar -xvf 2.3.tar.gz  
 	
 5、下载nginx_upstream_check_module模块，该模块用于ustream健康检查
+
     cd /usr/servers/ngx_openresty-1.7.7.2/bundle  
     wget https://github.com/yaoweibin/nginx_upstream_check_module/archive/v0.3.0.tar.gz  
     tar -xvf v0.3.0.tar.gz   
 
 6、安装ngx_openresty
+
     cd /usr/servers/ngx_openresty-1.7.7.2  
     ./configure --prefix=/usr/servers --with-http_realip_module  --with-pcre  --with-luajit --add-module=./bundle/ngx_cache_purge-2.3/ --add-module=./bundle/nginx_upstream_check_module-0.3.0/ -j2  
     make && make install  
-	
+
 	--with***                安装一些内置/集成的模块
 	--with-http_realip_module  取用户真实ip模块
 	-with-pcre               Perl兼容的达式模块
@@ -37,6 +45,7 @@
 	--add-module            添加自定义的第三方模块，如此次的ngx_che_purge
 	
 7、到/usr/servers目录下 
+
     cd /usr/servers/  
     ll   
 
@@ -47,6 +56,7 @@
 	通过/usr/servers/nginx/sbin/nginx  -V 查看nginx版本和安装的模块
 	
 8、启动nginx
+
 	/usr/servers/nginx/sbin/nginx
 	
 接下来该配置nginx+lua开发环境了
@@ -54,14 +64,17 @@
 配置及Nginx HttpLuaModule文档在可以查看http://wiki.nginx.org/HttpLuaModule。
 
 1、编辑nginx.conf配置文件 
+
 	vim /usr/servers/nginx/conf/nginx.conf  
 
 2、在http部分添加如下配置 
+
     #lua模块路径，多个之间”;”分隔，其中”;;”表示默认搜索路径，默认到/usr/servers/nginx下找  
     lua_package_path "/usr/servers/lualib/?.lua;;";  #lua 模块  
     lua_package_cpath "/usr/servers/lualib/?.so;;";  #c模块   
 
 3、为了方便开发我们在/usr/servers/nginx/conf目录下创建一个lua.conf 
+
     #lua.conf  
     server {  
         listen       80;  
@@ -69,12 +82,15 @@
     }  
 
 4、在nginx.conf中的http部分添加include lua.conf包含此文件片段 
+
     include lua.conf;  
 
 5、测试是否正常 
+
     /usr/servers/nginx/sbin/nginx  -t   
 
 如果显示如下内容说明配置成功
+
 	nginx: the configuration file /usr/servers/nginx/conf/nginx.conf syntax is ok
 	nginx: configuration file /usr/servers/nginx/conf/nginx.conf test is successful
 
@@ -82,21 +98,26 @@
 HelloWorld
 
 1、在lua.conf中server部分添加如下配置 
+
     location /lua {  
         default_type 'text/html';  
             content_by_lua 'ngx.say("hello world")';  
     }  
 
 2、测试配置是否正确 
+
     /usr/servers/nginx/sbin/nginx  -t  
 
 3、重启nginx 
+
     /usr/servers/nginx/sbin/nginx  -s reload  
 
 4、访问如http://192.168.1.6/lua（自己的机器根据实际情况换ip），可以看到如下内容 hello world
 
 5、lua代码文件
-	我们把lua代码放在nginx配置中会随着lua的代码的增加导致配置文件太长不好维护，因此我们应该把lua代码移到外部文件中存储。 
+
+我们把lua代码放在nginx配置中会随着lua的代码的增加导致配置文件太长不好维护，因此我们应该把lua代码移到外部文件中存储。 
+
     vim /usr/servers/nginx/conf/lua/test.lua  
 
     #添加如下内容  
@@ -108,27 +129,33 @@ HelloWorld
         content_by_lua_file conf/lua/test.lua; #相对于nginx安装目录  
     }   
 
-	此处conf/lua/test.lua也可以使用绝对路径/usr/servers/nginx/conf/lua/test.lua。
+此处conf/lua/test.lua也可以使用绝对路径/usr/servers/nginx/conf/lua/test.lua。
 
 6、lua_code_cache 
-	默认情况下lua_code_cache  是开启的，即缓存lua代码，即每次lua代码变更必须reload nginx才生效，如果在开发阶段可以通过lua_code_cache  off;关闭缓存，这样调试时每次修改lua代码不需要reload nginx；但是正式环境一定记得开启缓存。 
+
+默认情况下lua_code_cache  是开启的，即缓存lua代码，即每次lua代码变更必须reload nginx才生效，如果在开发阶段可以通过lua_code_cache  off;关闭缓存，这样调试时每次修改lua代码不需要reload nginx；但是正式环境一定记得开启缓存。 
+
         location /lua {  
             default_type 'text/html';  
             lua_code_cache off;  
             content_by_lua_file conf/lua/test.lua;  
     }  
 
-	开启后reload nginx会看到如下报警
+开启后reload nginx会看到如下报警
+
 	nginx: [alert] lua_code_cache is off; this will hurt performance in /usr/servers/nginx/conf/lua.conf:8
 
 7、错误日志
-	如果运行过程中出现错误，请不要忘记查看错误日志。 
+
+如果运行过程中出现错误，请不要忘记查看错误日志。 
+
     tail -f /usr/servers/nginx/logs/error.log  
-	到此我们的基本环境搭建完毕。
+到此我们的基本环境搭建完毕。
 	
 	
 nginx+lua项目构建
-	以后我们的nginx lua开发文件会越来越多，我们应该把其项目化，已方便开发。项目目录结构如下所示：
+
+以后我们的nginx lua开发文件会越来越多，我们应该把其项目化，已方便开发。项目目录结构如下所示：
 
 example
 
