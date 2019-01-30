@@ -1,11 +1,11 @@
-#Nginx Lua API
+# Nginx Lua API
 
 和一般的Web Server类似，我们需要接收请求、处理并输出响应。而对于请求我们需要获取如请求参数、请求头、Body体等信息；而对于处理就是调用相应的Lua代码即可；输出响应需要进行响应状态码、响应头和响应内容体的输出。因此我们从如上几个点出发即可。
 
  
-##接收请求
+## 接收请求
 
-###1、example.conf配置文件 
+### 1、example.conf配置文件 
 
     location ~ /lua_request/(\d+)/(\d+) {  
         #设置nginx变量  
@@ -18,7 +18,7 @@
         echo_after_body "ngx.var.b $b";  
     }  
 
-###2、test_request.lua 
+### 2、test_request.lua 
 
     --nginx变量  
     local var = ngx.var  
@@ -102,7 +102,7 @@ ngx.req.get_body_data：为解析的请求body体内容字符串。
 
     wget --post-data 'a=1&b=2' 'http://127.0.0.1/lua_request/1/2?a=3&b=4' -O -   
 
-##输出响应 
+## 输出响应 
 
 ### 1.1、example.conf配置文件
 
