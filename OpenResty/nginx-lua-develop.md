@@ -154,9 +154,9 @@ ngx.send_headers()发送响应状态码，当调用ngx.say/ngx.print时自动发
 
  
 
-##其他API
+## 其他API
 
-###1、example.conf配置文件**
+### 1、example.conf配置文件**
 
     location /lua_other {  
         default_type "text/html";  
@@ -165,7 +165,7 @@ ngx.send_headers()发送响应状态码，当调用ngx.say/ngx.print时自动发
 
  
 
-###2、test_other.lua
+### 2、test_other.lua
 
     --未经解码的请求uri  
     local request_uri = ngx.var.request_uri;  
@@ -189,7 +189,7 @@ ngx.re.match：nginx正则表达式匹配；
 
 更多Nginx Lua API请参考 http://wiki.nginx.org/HttpLuaModule#Nginx_API_for_Lua。
 
-##Nginx全局内存
+## Nginx全局内存
 
 使用过如Java的朋友可能知道如Ehcache等这种进程内本地缓存，Nginx是一个Master进程多个Worker进程的工作方式，因此我们可能需要在多个Worker进程中共享数据，那么此时就可以使用ngx.shared.DICT来实现全局内存共享。
 
@@ -198,14 +198,14 @@ ngx.re.match：nginx正则表达式匹配；
     #共享全局变量，在所有worker间共享  
     lua_shared_dict shared_data 1m;  
 
-###2、example.conf配置文件
+### 2、example.conf配置文件
 
     location /lua_shared_dict {  
         default_type "text/html";  
         content_by_lua_file /usr/example/lua/test_lua_shared_dict.lua;  
     }  
 
-###3、 test_lua_shared_dict.lua
+### 3、 test_lua_shared_dict.lua
 
     --1、获取全局共享内存变量  
     local shared_data = ngx.shared.shared_data  
@@ -226,7 +226,7 @@ ngx.re.match：nginx正则表达式匹配；
 
 到此基本的Nginx Lua API就学完了，对于请求处理和输出响应如上介绍的API完全够用了，更多API请参考官方文档。
 
-#Nginx Lua模块指令
+# Nginx Lua模块指令
 
 Nginx共11个处理阶段，而相应的处理阶段是可以做插入式处理，即可插拔式架构；另外指令可以在http、server、server if、location、location if几个范围进行配置：
 
@@ -235,18 +235,18 @@ Nginx共11个处理阶段，而相应的处理阶段是可以做插入式处理�
 更详细的解释请参考http://wiki.nginx.org/HttpLuaModule#Directives。如上指令很多并不常用，因此我们只拿其中的一部分做演示。
 
  
-##init_by_lua
+## init_by_lua
 
 每次Nginx重新加载配置时执行，可以用它来完成一些耗时模块的加载，或者初始化一些全局配置；在Master进程创建Worker进程时，此指令中加载的全局变量会进行Copy-OnWrite，即会复制到所有全局变量到Worker进程。
 
-###1、nginx.conf配置文件中的http部分添加如下代码
+### 1、nginx.conf配置文件中的http部分添加如下代码
 
     #共享全局变量，在所有worker间共享  
     lua_shared_dict shared_data 1m;  
       
     init_by_lua_file /usr/example/lua/init.lua;  
 
-###2、init.lua
+### 2、init.lua
 
     --初始化耗时的模块  
     local redis = require 'resty.redis'  
@@ -259,7 +259,7 @@ Nginx共11个处理阶段，而相应的处理阶段是可以做插入式处理�
     local shared_data = ngx.shared.shared_data  
     shared_data:set("count", 1)  
 
-###3、test.lua
+### 3、test.lua
 
     count = count + 1  
     ngx.say("global variable : ", count)  
@@ -268,22 +268,22 @@ Nginx共11个处理阶段，而相应的处理阶段是可以做插入式处理�
     shared_data:incr("count", 1)  
     ngx.say("hello world")  
 
-###4、访问如http://192.168.1.2/lua 会发现全局变量一直不变，而共享内存一直递增
+### 4、访问如http://192.168.1.2/lua 会发现全局变量一直不变，而共享内存一直递增
 
 	global variable : 2 , shared memory : 8 hello world 
 
  另外注意一定在生产环境开启lua_code_cache，否则每个请求都会创建Lua VM实例。
 
  
-##init_worker_by_lua
+## init_worker_by_lua
 
 用于启动一些定时任务，比如心跳检查，定时拉取服务器配置等等；此处的任务是跟Worker进程数量有关系的，比如有2个Worker进程那么就会启动两个完全一样的定时任务。
 
-###1、nginx.conf配置文件中的http部分添加如下代码
+### 1、nginx.conf配置文件中的http部分添加如下代码
 
     init_worker_by_lua_file /usr/example/lua/init_worker.lua;  
 
-###2、init_worker.lua
+### 2、init_worker.lua
 
     local count = 0  
     local delayInSeconds = 3  
@@ -310,11 +310,11 @@ lua_max_pending_timers 1024;  #最大等待任务数
 
 lua_max_running_timers 256;    #最大同时运行任务数
 
-##set_by_lua 
+## set_by_lua 
 
 设置nginx变量，我们用的set指令即使配合if指令也很难实现负责的赋值逻辑；
 
-###1.1、example.conf配置文件
+### 1.1、example.conf配置文件
 
     location /lua_set_1 {  
         default_type "text/html";  
@@ -326,7 +326,7 @@ set_by_lua_file：语法set_by_lua_file $var lua_file arg1 arg2...; 在lua代码
 
  
 
-###1.2、test_set_1.lua
+### 1.2、test_set_1.lua
 
     local uri_args = ngx.req.get_uri_args()  
     local i = uri_args["i"] or 0  
@@ -346,7 +346,7 @@ set_by_lua_file：语法set_by_lua_file $var lua_file arg1 arg2...; 在lua代码
 
  
 
-###2.1、首先在example.conf中使用map指令来映射host到指定nginx变量，方便我们测试
+### 2.1、首先在example.conf中使用map指令来映射host到指定nginx变量，方便我们测试
 
     ############ 测试时使用的动态请求  
     map $host $item_dynamic {  
@@ -415,13 +415,13 @@ set_by_lua_file：语法set_by_lua_file $var lua_file arg1 arg2...; 在lua代码
 
   
 
-##rewrite_by_lua 
+## rewrite_by_lua 
 
 执行内部URL重写或者外部重定向，典型的如伪静态化的URL重写。其默认执行在rewrite处理阶段的最后。
 
  
 
-###1.1、example.conf配置文件
+### 1.1、example.conf配置文件
 
     location /lua_rewrite_1 {  
         default_type "text/html";  
@@ -431,7 +431,7 @@ set_by_lua_file：语法set_by_lua_file $var lua_file arg1 arg2...; 在lua代码
 
  
 
-###1.2、test_rewrite_1.lua
+### 1.2、test_rewrite_1.lua
 
     if ngx.req.get_uri_args()["jump"] == "1" then  
        return ngx.redirect("http://www.jd.com?jump=1", 302)  
@@ -441,7 +441,7 @@ set_by_lua_file：语法set_by_lua_file $var lua_file arg1 arg2...; 在lua代码
 
  
 
-###2.1、example.conf配置文件
+### 2.1、example.conf配置文件
 
     location /lua_rewrite_2 {  
         default_type "text/html";  
@@ -451,7 +451,7 @@ set_by_lua_file：语法set_by_lua_file $var lua_file arg1 arg2...; 在lua代码
 
  
 
-###2.2、test_rewrite_2.lua
+### 2.2、test_rewrite_2.lua
 
     if ngx.req.get_uri_args()["jump"] == "1" then  
        ngx.req.set_uri("/lua_rewrite_3", false);  
@@ -477,7 +477,7 @@ ngx.req.set_uri_args：重写请求参数，可以是字符串(a=1&b=2)也可以
 
  
 
-###3.1、example.conf配置文件
+### 3.1、example.conf配置文件
 
 
     location /lua_rewrite_3 {  
@@ -488,7 +488,7 @@ ngx.req.set_uri_args：重写请求参数，可以是字符串(a=1&b=2)也可以
 
  
 
-###3.2、test_rewrite_3.lua
+### 3.2、test_rewrite_3.lua
 
     if ngx.req.get_uri_args()["jump"] == "1" then  
        ngx.req.set_uri("/lua_rewrite_4", true);  
@@ -520,7 +520,7 @@ rewrite ^ /lua_rewrite_4 last;           等价于  ngx.req.set_uri("/lua_rewrit
 
  
 
-##access_by_lua 
+## access_by_lua 
 
 用于访问控制，比如我们只允许内网ip访问，可以使用如下形式
 
@@ -532,7 +532,7 @@ rewrite ^ /lua_rewrite_4 last;           等价于  ngx.req.set_uri("/lua_rewrit
 
  
 
-###1.1、example.conf配置文件
+### 1.1、example.conf配置文件
 
     location /lua_access {  
         default_type "text/html";  
@@ -541,7 +541,7 @@ rewrite ^ /lua_rewrite_4 last;           等价于  ngx.req.set_uri("/lua_rewrit
     }  
 
  
-###1.2、test_access.lua
+### 1.2、test_access.lua
 
     if ngx.req.get_uri_args()["token"] ~= "123" then  
        return ngx.exit(403)  
@@ -550,7 +550,7 @@ rewrite ^ /lua_rewrite_4 last;           等价于  ngx.req.set_uri("/lua_rewrit
 即如果访问如http://192.168.1.2/lua_access?token=234将得到403 Forbidden的响应。这样我们可以根据如cookie/用户token来决定是否有访问权限。
 
 
-##content_by_lua   
+## content_by_lua   
 
 此指令之前已经用过了，此处就不讲解了。
 
